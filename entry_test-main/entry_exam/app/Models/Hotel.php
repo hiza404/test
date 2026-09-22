@@ -26,19 +26,48 @@ class Hotel extends Model
     }
 
     /**
-     * Search hotel by hotel name
+     * Build the query for searching hotels by name and/or prefecture
+     *
+     * @param string|null $hotelName
+     * @param int|null $prefectureId
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public static function searchHotelsQuery(?string $hotelName = null, ?int $prefectureId = null)
+    {
+        $query = self::with('prefecture');
+
+        if (!empty($hotelName)) {
+            $query->where('hotel_name', 'LIKE', '%' . $hotelName . '%');
+        }
+
+        if (!empty($prefectureId)) {
+            $query->where('prefecture_id', $prefectureId);
+        }
+
+        return $query->orderBy('hotel_id', 'desc');
+    }
+
+    /**
+     * Search hotels by name (partial match) and/or prefecture ID
+     *
+     * @param string|null $hotelName
+     * @param int|null $prefectureId
+     * @return array
+     */
+    public static function searchHotels(?string $hotelName = null, ?int $prefectureId = null): array
+    {
+        return self::searchHotelsQuery($hotelName, $prefectureId)->get()->toArray();
+    }
+
+    /**
+     * Search hotel by hotel name (partial match for backward compatibility)
      *
      * @param string $hotelName
      * @return array
      */
-    static public function getHotelListByName(string $hotelName): array
+    public static function getHotelListByName(string $hotelName): array
     {
-        $result = Hotel::where('hotel_name', '=', $hotelName)
-            ->with('prefecture')
-            ->get()
-            ->toArray();
-
-        return $result;
+        return self::searchHotels($hotelName);
     }
 
     /**
